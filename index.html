@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduSathi AI - Study Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; padding: 20px; display: flex; justify-content: center; }
+    .container { max-width: 700px; width: 100%; }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h1 { color: #2563eb; font-size: 28px; margin-bottom: 6px; }
+    .header p { color: #64748b; font-size: 14px; }
+    .card { background: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 18px; margin-bottom: 12px; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    label { font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; }
+    textarea, input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px; }
+    textarea:focus, input:focus, select:focus { border-color: #2563eb; ring: 2px #bfdbfe; }
+    button { width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .output-box { margin-top: 15px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; display: none; }
+    .error-box { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>EduSathi AI 🎓</h1>
+      <p>Aapka personal AI study companion for notes, quizzes aur quick answers.</p>
+    </div>
+
+    <!-- Section 1: AI Study Assistant -->
+    <div class="card">
+      <h2>🤖 Ask Study Assistant</h2>
+      <label for="chatInput">Apna question likhiye:</label>
+      <textarea id="chatInput" rows="3" placeholder="Jaise: DBMS me Normalization kya hota hai?"></textarea>
+      <button id="chatBtn" onclick="askAI()">Ask EduSathi AI</button>
+      <div id="chatOutput" class="output-box"></div>
+    </div>
+
+    <!-- Section 2: AI Quiz Generator -->
+    <div class="card">
+      <h2>📝 AI Quiz Generator</h2>
+      <label for="quizTopic">Quiz Topic:</label>
+      <input type="text" id="quizTopic" placeholder="Jaise: Operating System Process Scheduling">
+      <label for="quizLang">Bhasha select karein:</label>
+      <select id="quizLang">
+        <option value="Simple Hinglish">Simple Hinglish</option>
+        <option value="Hindi">Hindi</option>
+        <option value="English">English</option>
+      </select>
+      <button id="quizBtn" onclick="generateQuiz()">Generate Quiz</button>
+      <div id="quizOutput" class="output-box"></div>
+    </div>
+  </div>
+
+  <script>
+    // Universal function to call backend server
+    async function requestAI(promptText, outputElementId, buttonElementId) {
+      const outputBox = document.getElementById(outputElementId);
+      const button = document.getElementById(buttonElementId);
+
+      outputBox.style.display = "block";
+      outputBox.className = "output-box";
+      outputBox.innerText = "⏳ AI answer taiyar kar raha hai, thoda intezar karein...";
+      button.disabled = true;
+
+      try {
+        // Backend relative path use karta hai taaki local aur deployed dono par bina code badle chale
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: promptText })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Server response error");
+        }
+
+        outputBox.innerText = data.answer;
+      } catch (err) {
+        outputBox.className = "output-box error-box";
+        outputBox.innerText = "⚠️ Error: " + err.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function askAI() {
+      const question = document.getElementById("chatInput").value.trim();
+      if (!question) return alert("Kripya pehle sawal likhiye!");
+      requestAI(question, "chatOutput", "chatBtn");
+    }
+
+    function generateQuiz() {
+      const topic = document.getElementById("quizTopic").value.trim();
+      const lang = document.getElementById("quizLang").value;
+      if (!topic) return alert("Kripya quiz ka topic likhiye!");
+
+      const prompt = `Generate 3 multiple choice questions (MCQs) on the topic "${topic}" with options A, B, C, D and explanations in ${lang}.`;
+      requestAI(prompt, "quizOutput", "quizBtn");
+    }
+  </script>
+</body>
+</html>
